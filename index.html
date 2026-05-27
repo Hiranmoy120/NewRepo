@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>If you have come this far... why not go through it</title>
+    <style>
+        :root {
+            --bg: #020202;
+            --panel: #0a0a0a;
+            --accent: #8B0000;
+            --glow: #ff3333;
+            --text: #ffdddd;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 30%, rgba(139, 0, 0, 0.1) 0%, transparent 75%);
+            z-index: -1;
+        }
+        .sidebar { width: 260px; background: var(--panel); border-right: 2px solid var(--accent); padding: 20px 0; }
+        .logo { padding: 25px; font-size: 1.9em; text-align: center; color: var(--accent); text-shadow: 0 0 20px var(--glow); border-bottom: 1px solid var(--accent); }
+        .nav-item { padding: 16px 28px; cursor: pointer; transition: 0.3s; }
+        .nav-item:hover, .nav-item.active { background: #1f0000; border-left: 5px solid var(--accent); }
+        .main { flex: 1; padding: 40px; overflow-y: auto; }
+        h1 { font-size: 2.5em; color: var(--accent); text-shadow: 0 0 25px var(--glow); margin-bottom: 20px; }
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            margin: 8px 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn:hover { background: #ff2222; transform: scale(1.05); box-shadow: 0 0 30px var(--glow); }
+        input, textarea {
+            background: #1a0000;
+            border: 1px solid #550000;
+            color: var(--text);
+            padding: 14px;
+            width: 100%;
+            margin: 10px 0;
+        }
+        .note {
+            background: #140000;
+            padding: 20px;
+            margin: 15px 0;
+            border: 1px solid #550000;
+        }
+        audio { width: 100%; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">VOID DRIVE</div>
+        <div class="nav-item active" onclick="switchTab(0)">📝 Notes</div>
+        <div class="nav-item" onclick="switchTab(1)">🎵 Audio</div>
+    </div>
+
+    <div class="main">
+        <div id="tab0">
+            <h1>If you have come this far...</h1>
+            <p style="color:#aa4444;margin-bottom:25px;">why not go through it</p>
+            
+            <input type="text" id="noteTitle" placeholder="Title your sin...">
+            <textarea id="noteContent" rows="6" placeholder="Write your secret text here..."></textarea>
+            
+            <button class="btn" onclick="addNote()">💾 ADD TO THE VOID</button>
+            <button class="btn" onclick="generateShareLink()">🔗 GENERATE SHARE LINK</button>
+            
+            <div id="notesContainer" style="margin-top:30px;"></div>
+        </div>
+
+        <div id="tab1" style="display:none">
+            <h1>Audio Vault</h1>
+            <div style="background:#140000;padding:30px;border:1px solid #8B0000;">
+                <strong>🎵 Music Disc - 11 (C418)</strong><br><br>
+                <audio id="voicePlayer" controls preload="auto" 
+                       src="https://YOUR-DIRECT-MP3-LINK-HERE.mp3">
+                </audio>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let notes = [];
+
+        function switchTab(n) {
+            document.getElementById('tab0').style.display = n === 0 ? 'block' : 'none';
+            document.getElementById('tab1').style.display = n === 1 ? 'block' : 'none';
+        }
+
+        function addNote() {
+            const title = document.getElementById('noteTitle').value.trim() || "Untitled";
+            const content = document.getElementById('noteContent').value.trim();
+            
+            if (!content) return alert("Write something first 😏");
+
+            notes.push({ title, content, time: new Date().toLocaleString() });
+            renderNotes();
+            
+            document.getElementById('noteTitle').value = '';
+            document.getElementById('noteContent').value = '';
+        }
+
+        function renderNotes() {
+            const container = document.getElementById('notesContainer');
+            container.innerHTML = notes.map(n => `
+                <div class="note">
+                    <strong>${n.title}</strong> <small style="color:#666;">${n.time}</small>
+                    <p style="margin-top:12px; line-height:1.6;">${n.content}</p>
+                </div>
+            `).join('');
+        }
+
+        function generateShareLink() {
+            if (notes.length === 0) {
+                alert("Add some notes first before generating the link!");
+                return;
+            }
+
+            const encodedNotes = encodeURIComponent(JSON.stringify(notes));
+            const baseURL = window.location.href.split('?')[0]; // Clean base URL
+            const shareURL = baseURL + '?notes=' + encodedNotes;
+
+            navigator.clipboard.writeText(shareURL).then(() => {
+                alert("✅ Share link copied!\n\nPaste it in a new tab after hosting it properly.");
+                console.log("Share Link:", shareURL);
+            });
+        }
+
+        // Load notes from URL
+        function loadSharedNotes() {
+            const params = new URLSearchParams(window.location.search);
+            const sharedData = params.get('notes');
+            if (sharedData) {
+                try {
+                    notes = JSON.parse(decodeURIComponent(sharedData));
+                    renderNotes();
+                } catch(e) {
+                    console.error("Failed to load shared notes");
+                }
+            }
+        }
+
+        window.onload = () => {
+            loadSharedNotes();
+            switchTab(0);
+        };
+    </script>
+</body>
+</html>
